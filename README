@@ -37,38 +37,13 @@ not really need the executable, but the xml output that you will be parsing
 
 CHANGES
 
-Changes for 0.6_1
-	- fixed a bug with the test script (finding test file)
-	- made a separate test to test the actual method existance
-	- portability when running the tests using File::Spec.
 
-Changes to 0.6
-	- better memory management using twig_roots
-	- some bugs with output types and filters
-	- generic_os and all references are now refereed to as 'osfamily'
-		I thought it better resembles what it stands for.
-	- fixed some documentation problems
-	- changes in Parse::Nmap::XML :
-		parse_filter_* have been replaced with parse_filters(), which
-		can enable multiple different filters through a hashref.
-		Filters available:
-		ONLY_ACTIVE, PARSE_OSFAMILY, PARSE_UPTIME, PARSE_PORTINFO,
-		PARSE_SEQUENCES
-	- added parse information of
-		tcpsequence, ipidsequence, tcptssequence
-	- additions to Parse::Nmap::XML::Host methods
-		tcpsequence, ipidsequence, tcptssequence
-
-Changes from 0.5
-	- faster loading module
-	- added more documentation
-	- minor speed improvements
-	- added methods to Parse::Nmap::XML
-		parse_filter_generic_os($bool) (see doc)
-	- renamed only_active() to parse_filter_status($bool) (see doc)
-	- Parse::Nmap::XML::Host
-		changed hostnames() to take a value a number (see doc)
-		changed os_matches() to take a value a number (see doc)
+Changes from 0.6_1 to 0.6_2
+	- Bug #2968: 
+		fixed bogus 'use 5.008' in Makefile.PL (runs on 5.6 also)
+		instead using 5.004
+		fixed minor warnings when compiling with -w
+		added 'use warnings' to _methods test
 
 FOR OTHER CHANGE INFORMATION SEE THE "CHANGES" FILE
 

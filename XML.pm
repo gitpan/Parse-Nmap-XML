@@ -5,20 +5,20 @@ package Parse::Nmap::XML;
 ################################################################################
 
 use strict;
-use lib '../';
+require 5.004;
 use XML::Twig;
-use vars qw($S %H %OS_LIST %G %F);
-use Exporter;
-use vars qw($DEBUG);
-our @ISA = qw(Exporter);
+use vars qw($S %H %OS_LIST %G %F $DEBUG);
+#use Exporter;
 
-our %EXPORT_TAGS = ( 'all' => [ qw( ) ] );
+#our @ISA = qw(Exporter);
 
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+#our %EXPORT_TAGS = ( 'all' => [ qw( ) ] );
 
-our @EXPORT = qw( );
+#our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our $VERSION = '0.6_1';
+#our @EXPORT = qw( );
+
+our $VERSION = '0.6_2';
 
 sub new {
 my ($class,$self) = shift;
@@ -155,9 +155,9 @@ sub _host_hdlr {
 my($twig, $host)= @_; # handlers are always called with those 2 arguments
 my ($addr,$tmp);
     if(not defined($host)){return undef;}
-    my $tmp        = $host->first_child('address');         # get the element text
+    $tmp        = $host->first_child('address');         # get the element text
     if(not defined $tmp){return undef;}
-    my $addr = $tmp->att('addr');
+    $addr = $tmp->att('addr');
     if(!defined($addr) || $addr eq ''){return undef;}
     $H{$addr}{addr} = $addr;
     $H{$addr}{addrtype} = $tmp->att('addrtype');

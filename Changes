@@ -1,5 +1,12 @@
 Revision history for Perl extension Parse::Nmap::XML.
 
+Changes for 0.6_2
+	- Bug #2968: 
+		fixed bogus 'use 5.008' in Makefile.PL (runs on 5.6 also)
+		instead using 5.004
+		fixed minor warnings when compiling with -w
+		added 'use warnings' to _methods test
+
 Changes for 0.6_1
 	- fixed a bug with the test script (finding test file)
 	- made a separate test to test the actual method existance

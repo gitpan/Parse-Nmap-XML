@@ -2,6 +2,7 @@
 
 use strict;
 use blib;
+use warnings;
 use File::Spec;
 use Cwd;
 use Test::More tests => 7;
