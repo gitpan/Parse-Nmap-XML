@@ -1,0 +1,45 @@
+Revision history for Perl extension Parse::Nmap::XML.
+
+
+Changed for 0.6
+	- better memory management using twig_roots
+	- some bugs with output types and filters
+	- generic_os and all references are now refereed to as 'osfamily'
+		I thought it better resembles what it stands for.
+	- fixed some documentation problems
+	- changes in Parse::Nmap::XML :
+		parse_filter_* have been replaced with parse_filters(), which
+		can enable multiple different filters through a hashref.
+		Filters available:
+		ONLY_ACTIVE, PARSE_OSFAMILY, PARSE_UPTIME, PARSE_PORTINFO,
+		PARSE_SEQUENCES
+	- added parse information of
+		tcpsequence, ipidsequence, tcptssequence
+	- additions to Parse::Nmap::XML::Host methods
+		tcpsequence, ipidsequence, tcptssequence
+
+Changes for 0.5
+	- faster loading module
+	- added more documentation
+	- minor speed improvements
+	- added methods to Parse::Nmap::XML
+		parse_filter_generic_os($bool) (see doc)
+	- renamed only_active() to parse_filter_status($bool) (see doc)
+	- Parse::Nmap::XML::Host
+		changed hostnames() to take a value a number (see doc)
+		changed os_matches() to take a value a number (see doc)
+
+Changes for 0.4
+	- added new package called ScanInfo (Parse::Nmap::XML::ScanInfo
+        	this contains methods that make it easier to access the
+        	scan information
+	- added new package called Host (Parse::Nmap::XML::Host),
+		which makes it easier to access values for each of the
+		hosts found. See documentation.
+		Host trees are now full of these *::Host objects.
+	- fixed minor bugs with parsing the xml files.
+	- some memory usage improvments.
+
+Changes for 0.01
+	- original version; created by h2xs 1.22 with options
+		-X -n Parse::Nmap::XML

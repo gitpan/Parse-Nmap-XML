@@ -1,0 +1,9 @@
+Changes
+MANIFEST			This list of files
+Makefile.PL
+README
+XML.pm
+t/basic.xml
+t/basic_parse.t
+t/nmap.dtd
+t/nmap_std.xml
