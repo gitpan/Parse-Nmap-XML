@@ -6,7 +6,7 @@ use strict;
 use blib;
 use File::Spec;
 use Cwd;
-use Test::More tests => 63;
+use Test::More tests => 64;
 use Parse::Nmap::XML;
 use constant FIRST => 0;
 use constant SECOND => 1;
@@ -140,9 +140,10 @@ is(scalar $host->os_matches(),1,'Testing for correct OS');
 is($host->os_matches(1), 'Linux Kernel 2.4.0 - 2.5.20','Testing for correct OS');
 
 #OS CLASS
-is_deeply([$host->os_class() ],['Linux','2.4.x','general purpose'],'Testing os_class() with no args');
-is_deeply([$host->os_class(1)],['Linux','2.4.x','general purpose'],'Testing os_class() with arg 1');
-is_deeply([$host->os_class(2)],['Linux','2.5.x','general purpose'],'Testing os_class() with arg 2');
+is_deeply([$host->os_class() ],['Linux','2.4.x','Linux','general purpose'],'Testing os_class() with no args');
+is_deeply([$host->os_class(1)],['Linux','2.4.x','Linux','general purpose'],'Testing os_class() with arg 1');
+is_deeply([$host->os_class(2)],['Solaris','8','Sun','general purpose'],'Testing os_class() with 2');
+is($host->os_class('total'),2,'Testing total count of os_class tags');
 
 #OSFAMILY
 is($host->os_family(),'linux','Testing os_generic() = linux');

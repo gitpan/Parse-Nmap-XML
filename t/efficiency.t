@@ -6,13 +6,16 @@ use strict;
 use blib;
 use File::Spec;
 use Cwd;
-use Test::More tests => 5;
+use Test::More;
 use Parse::Nmap::XML;
 use vars qw($t1 $t2);
-use constant COUNT => 1;
+use constant COUNT => 10;
+$|=1;
 
-use Time::HiRes qw(gettimeofday tv_interval);
+eval {require Time::HiRes;};
 
+if($@){plan skip_all => 'Time::HiRes not installed for performance tests';}
+else {plan tests => 5;}
 use constant TEST_FILE =>'basic.xml';
 use vars qw($host $p $FH $scaninfo @test %test $test);
 
@@ -22,9 +25,9 @@ $p = new Parse::Nmap::XML;
 
 
 #BENCHMARK WITH NO FILTERS
-$t1 = [gettimeofday];
-$p->parsefile($FH);
-$t1 = tv_interval($t1,[gettimeofday]);
+$t1 = [Time::HiRes::gettimeofday()];
+$p->parsefile($FH) for(0..COUNT);
+$t1 = Time::HiRes::tv_interval($t1,[Time::HiRes::gettimeofday()]);
 
 #TESTING OF INFORMATION
 is($p->get_scaninfo()->num_of_services(), '2046','Testing full tag');
@@ -35,12 +38,16 @@ $p->clean();
 $p->parse_filters({portinfo => 0,scaninfo => 0,uptime => 0});
 
 #BENCHMARK WITH FILTERS
-$t2 = [gettimeofday];
-$p->parsefile($FH);
-$t2 = tv_interval($t2,[gettimeofday]);
+$t2 = [Time::HiRes::gettimeofday()];
+$p->parsefile($FH) for(0..COUNT);
+$t2 = Time::HiRes::tv_interval($t2,[Time::HiRes::gettimeofday()]);
 
 #TESTING OF INFORMATION
 is($p->get_scaninfo(),undef,'Testing start tag /w filters');
 is($p->get_scaninfo(),undef,'Testing full tag /w filters');
-
-ok($t1 > $t2,"Percent Improvement: ".int($t1/$t2)."%");
+SKIP:
+{
+skip 'No performance improvement from filters',1 if($t1 == $t2 || $t2 == 0);
+ok($t1 > $t2 || $t1 == $t2,"Improvement Ratio: ".int(($t1-$t2)/($t2))." times faster");
+ print STDERR "\tFilter Improvement Ratio: ".int(($t1-$t2)/($t2))." times faster\n";
+}

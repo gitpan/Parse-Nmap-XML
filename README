@@ -1,4 +1,4 @@
-Parse/Nmap/XML version 0.62
+Parse/Nmap/XML version 0.63
 ============================
 
 frontend parser for nmap xml-output scan files
@@ -37,8 +37,13 @@ not really need the executable, but the xml output that you will be parsing
 CHANGES
 
 
-Changes from 0.60 to 0.62
+Changes from 0.60 to 0.63
 
+	- added vendor to os_class
+	- fixed division by zero on one of the efficiency test.
+	- it now checks to make sure Time::HiRes is installed before
+		performing tests.
+	- minor warning problems removed on Win32 systems.
 	- changes to parse filter tags. All previously called PARSE_* have
 		the PARSE_ removed from them. Ex: PARSE_OSFAMILY is now
 		OSFAMILY.

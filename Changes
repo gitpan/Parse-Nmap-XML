@@ -1,5 +1,11 @@
 Revision history for Perl extension Parse::Nmap::XML.
 
+Changes for 0.63
+	- added vendor to os_class
+	- fixed division by zero on one of the efficiency test.
+	- it now checks to make sure Time::HiRes is installed before
+		performing tests.
+	- minor warning problems removed on Win32 systems.
 
 Changes for 0.62
 	- stable release with all new changes.

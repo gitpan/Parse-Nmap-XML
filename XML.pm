@@ -12,7 +12,7 @@ use constant IGNORE_ADDPORT => 1;
 use constant IGNORE_EXTRAPORTS => 1;
 
 
-our $VERSION = '0.62';
+our $VERSION = '0.63';
 
 sub new {
 
@@ -243,6 +243,7 @@ my $s = $p->first_child('service[@name]');
 $tmp->{service_name} = 'unknown';
 
 if(defined $s){
+$tmp->{service_proto} = '';
 $tmp->{service_name} = $s->att('name');
 $tmp->{service_proto} = $s->att('proto') if($s->att('proto'));
 $tmp->{service_rpcnum} = $s->att('rpcnum') if($tmp->{service_proto} eq 'rpc');
@@ -270,7 +271,7 @@ if(defined(my $os_list = $host->first_child('os'))){
 
     @list = ();
     for my $o ($os_list->children('osclass'))
-    {push @list, [$o->att('osfamily'),$o->att('osgen'),$o->att('type')];}
+    {push @list, [$o->att('osfamily'),$o->att('osgen'),$o->att('vendor'),$o->att('type')];}
     @{$H{$addr}{os}{osclass}} = @list;
 
     }
@@ -420,6 +421,7 @@ sub os_family {(wantarray) ? 	return (split ',', $_[0]->{os}{osfamily_names}) :
 
 sub os_class {
 if($_[1] eq ''){return @{@{$_[0]->{os}{osclass}}[0]}}
+elsif(lc($_[1]) eq 'total'){return scalar @{$_[0]->{os}{osclass}};}
 elsif($_[1] ne ''){return @{@{$_[0]->{os}{osclass}}[$_[1] - 1]};}
 
 	}
@@ -664,6 +666,7 @@ This is the default.
 Resets the value of the filters to the default values:
 
  osfamily 	=> 1
+ scaninfo	=> 1
  only_active 	=> 0
  sequences 	=> 1
  portinfo	=> 1
@@ -707,9 +710,8 @@ the parsing to return even when an error occurs.
 Same as XML::Twig::safe_parse().
 
 This method is similar to "parse" except that it wraps the parsing
-in an "eval" block. It returns the twig on success and 0 on failure
-(the twig object also contains the parsed twig). $@ contains the
-error message on failure.
+in an "eval" block. It returns the twig on success and 0 on failure (the twig
+object also contains the parsed twig). $@ contains the error message on failure.
 
 Note that the parsing still stops as soon as an error is detected,
 there is no way to keep going after an error.
@@ -721,8 +723,8 @@ Same as XML::Twig::safe_parsefile().
 
 This method is similar to "parsefile" except that it wraps the
 parsing in an "eval" block. It returns the twig on success and 0 on
-failure (the twig object also contains the parsed twig) . $@ con-
-tains the error message on failure
+failure (the twig object also contains the parsed twig) . $@ contains the error
+message on failure
 
 Note that the parsing still stops as soon as an error is detected,
 there is no way to keep going after an error.
@@ -838,14 +840,14 @@ Returns the protocol of the specific scan type.
 The host object. This package contains methods to easily access the information
 of a host that was scanned.
 
- $host_obj = Parse::Nmap::XML->get_host($ip_addr);
-  #Now I can get information about this host whose ip = $ip_addr
-  print
- 'Hostname: '.$host_obj->hostnames(1),"\n",
- 'Address: '.$host_obj->addr()."\n",
- 'OS matches: '.(join ',', $host_obj->os_matches())."\n",
- 'Last Reboot: '.($host_obj->uptime_lastboot,"\n";
- #... you get the idea...
+  $host_obj = Parse::Nmap::XML->get_host($ip_addr);
+   #Now I can get information about this host whose ip = $ip_addr
+   print
+  'Hostname: '.$host_obj->hostnames(1),"\n",
+  'Address: '.$host_obj->addr()."\n",
+  'OS matches: '.(join ',', $host_obj->os_matches())."\n",
+  'Last Reboot: '.($host_obj->uptime_lastboot,"\n";
+  #... you get the idea...
 
 If you would like for me to add more advanced information (such as
 TCP Sequences), let me know.
@@ -925,6 +927,7 @@ value is determined by the list given in the *_osfamily_list() functions.
 I<Note: see set_osfamily_list()>
 
 =item B<os_class([$number])>
+I<Experimental - interface might change in future releases>
 
 Returns the os_family, os_generation and os_type that was guessed by nmap. The
 os_class tag does not always appear in all nmap OS fingerprinting scans. This
@@ -941,12 +944,14 @@ number to the function. If not number is given, the first os_class
 information is returned. The slot order starts at 1.
 
   #returns the first set (same as passing no arguments)
- ($os_family,$os_gen,$os_type) = $host_obj->os_class(1);
+ ($os_family,$os_gen,$os_vendor,$os_type) = $host_obj->os_class(1);
 
   #returns os_gen value only. Example: '2.4.x' if is a Linux 2.4.x kernel.
   $os_gen                      = ($host_obj->os_class())[2];# os_gen only
 
-You can play with perl to get the values you want easily.
+You can play with perl to get the values you want easily. Also, if argument
+'total' is passed, it will return the total number os_class tags parsed for this
+host.
 
 I<Note: This tag is usually available in new versions of nmap. You can define
 your own os_family customizing the os_family lists using the
