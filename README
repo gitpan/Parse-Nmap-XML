@@ -1,7 +1,7 @@
-Parse/Nmap/XML version 0.6_1
+Parse/Nmap/XML version 0.62
 ============================
 
-Parse Nmap xml-output files using perl
+frontend parser for nmap xml-output scan files
 
 This module is intended to sift through the nmap scan outputs in xml form,
 either by passing a filehandle that is being piped from a current nmap scan
@@ -11,9 +11,8 @@ In the authors opinion, this module is very easy to use to extract information
 from an nmap xml scan output about the scan itself and the hosts that were
 scanned.
 
-Because of the demand of this module, I'll be adding and changing some functions
-and methods to make it easier to access the information. Also, more information
-will be available as I keep working on this module. Send your feedbacks.
+I am trying to balance efficiency with ease of use. If you think something
+can be done differently send your feedback.
 
 INSTALLATION
 
@@ -33,28 +32,45 @@ This module requires these other modules and libraries:
 In addition, you will need nmap 3.00+. You don't exactly need it, but this
 version of nmap supports the xml output that this module can parse. So, you do
 not really need the executable, but the xml output that you will be parsing
-(or able to parse), must be from this version forward.
+(or able to parse), must be from this version onward.
 
 CHANGES
 
 
-Changes from 0.6_1 to 0.6_2
-	- Bug #2968: 
+Changes from 0.60 to 0.62
+
+	- changes to parse filter tags. All previously called PARSE_* have
+		the PARSE_ removed from them. Ex: PARSE_OSFAMILY is now
+		OSFAMILY.
+	- osclass tag added.
+	- a bug found with the sequences is fixed
+	- parse_filters completly excludes tags that you decide not to parse.
+		Much faster parsing and memory usage efficiency. efficiency.t
+		tests this benchmark to make sure that the twig parser does not
+		do any work it doesn't have to.
+	- permanently excluding some static tags using ignore_elts.
+	- os_port_used, now can return the open or closed port used in OS
+		detection depending on the given parameter.
+	- CPAN Bug #2968:
 		fixed bogus 'use 5.008' in Makefile.PL (runs on 5.6 also)
 		instead using 5.004
 		fixed minor warnings when compiling with -w
 		added 'use warnings' to _methods test
+	- fixed a bug with the test script (finding test file)
+	- made a separate test to test the actual method existance
+	- portability when running the tests using File::Spec.
 
 FOR OTHER CHANGE INFORMATION SEE THE "CHANGES" FILE
 
 TODO
-	- have full support of all the scan information
 	- make use of the ignoring of tags when parsing
-	- add more from the nmap_std xml file
+	- use the twig conversion, to access values through a hash and not
+		function calls. (Background).
+	- add more from the nmap_std xml file (until new one is released)
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2003 Anthony G Persaud L<apersaud@cpan.org>
+Copyright (C) 2003 Anthony G Persaud L<ironstar@iastate.edu>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

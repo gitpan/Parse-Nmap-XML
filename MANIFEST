@@ -3,8 +3,11 @@ MANIFEST			This list of files
 Makefile.PL
 README
 XML.pm
-t/_methods.t
+examples/ex_1.pl
+examples/ex_1.xml
+t/api.t
 t/basic.xml
-t/basic_parse.t
+t/efficiency.t
 t/nmap.dtd
 t/nmap_std.xml
+t/parser.t

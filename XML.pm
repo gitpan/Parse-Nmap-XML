@@ -7,30 +7,34 @@ package Parse::Nmap::XML;
 use strict;
 require 5.004;
 use XML::Twig;
-use vars qw($S %H %OS_LIST %G %F $DEBUG);
-#use Exporter;
+use vars qw($S %H %OS_LIST %F $DEBUG);
+use constant IGNORE_ADDPORT => 1;
+use constant IGNORE_EXTRAPORTS => 1;
 
-#our @ISA = qw(Exporter);
 
-#our %EXPORT_TAGS = ( 'all' => [ qw( ) ] );
-
-#our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-#our @EXPORT = qw( );
-
-our $VERSION = '0.6_2';
+our $VERSION = '0.62';
 
 sub new {
+
 my ($class,$self) = shift;
 $class = ref($class) || $class;
+
 $$self{twig}  = new XML::Twig(
-	start_tag_handlers => {nmaprun => \&_nmaprun_hdlr},
-	twig_roots => {
-		scaninfo 	=> \&_scaninfo_hdlr,
-		finished 	=> \&_finished_hdlr,
-		host 		=> \&_host_hdlr,
+	start_tag_handlers 	=>
+			{nmaprun => \&_nmaprun_hdlr},
+
+	twig_roots 		=> {
+		scaninfo => \&_scaninfo_hdlr,
+		finished => \&_finished_hdlr,
+		host 	 => \&_host_hdlr,
+				},
+	ignore_elts 	=> {
+		addport 	=> IGNORE_ADDPORT,
+		extraports 	=> IGNORE_EXTRAPORTS,
 		}
+
 		);
+
 #Default Filter Values
 reset_filters();
 
@@ -59,19 +63,43 @@ sub get_osfamily_list {return \%OS_LIST;}
 sub parse_filters {
 my $self = shift;
 my $filters = shift;
+my $state;
 grep {$F{lc($_)} = $filters->{$_} } keys %$filters;
+
+$$self{twig}->setIgnoreEltsHandlers({
+	'addport'	=> IGNORE_ADDPORT,
+	'extraports'	=> IGNORE_EXTRAPORTS,
+	'ports' 	=> ($F{portinfo} ? undef : 1),
+	'tcpsequence' 	=> ($F{sequences} ? undef : 1),
+	'ipidsequence' 	=> ($F{sequences} ? undef : 1),
+	'tcptssequence' => ($F{sequences} ? undef : 1),
+	'uptime' 	=> ($F{uptime} ? undef : 1),
+	'scaninfo' 	=> ($F{scaninfo} ? undef : 1),
+	'finished' 	=> ($F{scaninfo} ? undef : 1),
+	'nmaprun' 	=> ($F{scaninfo} ? undef : 1)
+	});
+
 return \%F;
 
 }
 
 sub reset_filters {
 %F = (
-	parse_osfamily 		=> 1,
-	only_active 		=> 0,
-	parse_sequences 	=> 1,
-	parse_portinfo		=> 1,
-	parse_uptime		=> 1
+	osfamily 	=> 1,
+	scaninfo	=> 1,
+	only_active 	=> 0,
+	sequences 	=> 1,
+	portinfo	=> 1,
+	uptime		=> 1
 	);
+
+
+$_[0]->{twig}->setIgnoreEltsHandlers({
+	addport 	=> IGNORE_ADDPORT,
+	extraports 	=> IGNORE_EXTRAPORTS,
+	}) if(ref($_[0]) eq __PACKAGE__);
+
+
 return \%F;
 
 }
@@ -84,7 +112,7 @@ sub parse {%H =();$S = undef;shift->{twig}->parse(@_);}
 sub parsefile {%H=();$S = undef;shift->{twig}->parsefile(@_);}
 sub safe_parse {%H=();$S = undef;shift->{twig}->safe_parse(@_);}
 sub safe_parsefile {%H=();$S = undef;shift->{twig}->safe_parsefile(@_);}
-sub clean {%H = ();$S = undef;$_[0]->{twig}->purge;return $S;}
+sub clean {%H = ();$S = undef;$_[0]->{twig}->purge;return $_[0];}
 
 ################################################################################
 ##			POST-PARSE METHODS				      ##
@@ -139,6 +167,7 @@ $twig->purge;}
 
 sub _nmaprun_hdlr {#Last tag in an nmap output
 my ($twig,$host) = @_;
+unless($F{scaninfo}){$twig->ignore;return;}
 $S->{start_time} = $host->att('start');
 $S->{nmap_version} = $host->att('version');
 $S->{args} = $host->att('args');
@@ -171,11 +200,11 @@ my ($addr,$tmp);
     	else { $H{$addr} = Parse::Nmap::XML::Host->new($H{$addr});}
     	return;}
 
-    $H{$addr}{ports} = _port_hdlr($host,$addr) if($F{parse_portinfo});
+    $H{$addr}{ports} = _port_hdlr($host,$addr) if($F{portinfo});
     $H{$addr}{os} = _os_hdlr($host,$addr);
-    $H{$addr}{uptime} = _uptime_hdlr($host,$addr) if($F{parse_uptime});
+    $H{$addr}{uptime} = _uptime_hdlr($host,$addr) if($F{uptime});
 
-    	if($F{parse_sequences})
+    	if($F{sequences})
 	{
 	    $H{$addr}{tcpsequence} = _tcpsequence($host,$addr);
 	    $H{$addr}{ipidsequence} = _ipidsequence($host,$addr);
@@ -229,13 +258,21 @@ my ($host,$addr) = (shift,shift);
 my ($tmp,@list);
 if(defined(my $os_list = $host->first_child('os'))){
     $tmp = $os_list->first_child("portused[\@state='open']");
-    $H{$addr}{os}{portused} = $tmp->att('portid') if(defined $tmp);
-    for my $o ($os_list->children('osmatch')){
-    push @list, $o->att('name');
-    }
+    $H{$addr}{os}{portused}{'open'} = $tmp->att('portid') if(defined $tmp);
+    $tmp = $os_list->first_child("portused[\@state='closed']");
+    $H{$addr}{os}{portused}{'closed'} = $tmp->att('portid') if(defined $tmp);
+
+
+    for my $o ($os_list->children('osmatch')){push @list, $o->att('name');  }
     @{$H{$addr}{os}{names}} = @list;
 
-    $H{$addr}{os}{osfamily_names} = _match_os(@list) if($F{parse_osfamily});
+    $H{$addr}{os}{osfamily_names} = _match_os(@list) if($F{osfamily});
+
+    @list = ();
+    for my $o ($os_list->children('osclass'))
+    {push @list, [$o->att('osfamily'),$o->att('osgen'),$o->att('type')];}
+    @{$H{$addr}{os}{osclass}} = @list;
+
     }
 
     return $H{$addr}{os};
@@ -269,7 +306,7 @@ return \@names;
 sub _tcpsequence {
 my ($host,$addr) = (shift,shift);
 my $temp;
-my $seq = $host->first_child('ipidsequence');
+my $seq = $host->first_child('tcpsequence');
 unless($seq){return undef;}
 
 return [$seq->att('class'),$seq->att('values'),$seq->att('index')];
@@ -289,7 +326,7 @@ return [$seq->att('class'),$seq->att('values')];
 sub _tcptssequence {
 my ($host,$addr) = (shift,shift);
 my $temp;
-my $seq = $host->first_child('ipidsequence');
+my $seq = $host->first_child('tcptssequence');
 unless($seq){return undef;}
 return [$seq->att('class'),$seq->att('values')];
 }
@@ -372,9 +409,20 @@ sub tcp_service_name {return $_[0]->{ports}{tcp}{$_[1]}{service_name};}
 sub udp_service_name {return $_[0]->{ports}{udp}{$_[1]}{service_name};}
 sub os_matches {($_[1]) ? 	return @{$_[0]->{os}{names}}[ $_[1] - 1 ] :
 				return (@{$_[0]->{os}{names}});}
-sub os_port_used {return $_[0]->{os}{portused};}
+sub os_port_used {
+$_[1] ||= 'open';
+if(lc($_[1]) eq 'closed'){return $_[0]->{os}{portused}{'closed'};}
+elsif(lc($_[1]) eq 'open'){  return $_[0]->{os}{portused}{'open'};}
+}
+
 sub os_family {(wantarray) ? 	return (split ',', $_[0]->{os}{osfamily_names}) :
 				return $_[0]->{os}{osfamily_names};}
+
+sub os_class {
+if($_[1] eq ''){return @{@{$_[0]->{os}{osclass}}[0]}}
+elsif($_[1] ne ''){return @{@{$_[0]->{os}{osclass}}[$_[1] - 1]};}
+
+	}
 
 sub tcpsequence {return @{$_[0]->{tcpsequence}}    if($_[0]->{tcpsequence});}
 sub ipidsequence {return @{$_[0]->{ipidsequence}}  if($_[0]->{ipidsequence});}
@@ -391,7 +439,7 @@ __END__
 
 =head1 NAME
 
-Parse::Nmap::XML - frontend to parse the Nmap scan data from the XML output (-oX).
+Parse::Nmap::XML - parser for nmap xml scan data using perl.
 
 =head1 SYNOPSIS
 
@@ -553,6 +601,11 @@ listing.
 example: osfamily_name = solaris if the os string being matched
 matches (solaris, sparc or sunos) keywords
 
+The reason for having this seprately that relying on the 'osclass' tag in the
+xml output is that the 'osclass' tag is not generated all the time. Usually
+new versions of nmap will generate the 'osclass' tags. These will be available
+through the Parse::Nmap::XML::Host methods. (See below).
+
 =item B<get_osfamily_list()>
 
 Returns a hashre containing the current osfaimly names (keys) and
@@ -566,11 +619,11 @@ when parsing the xml information. All filter names passed will be treated
 as case-insensitive.
 
  $obj->parse_filters({
- 	parse_osfamily => 1, #same as any variation. Ex: PaRSE_osfaMiLy
+ 	osfamily 	=> 1, #same as any variation. Ex: osfaMiLy
  	only_active	=> 0   #same here
  		});
 
-=item I<PARSE_OSFAMILY>
+=item I<OSFAMILY>
 
 If set to true, (the default), it will match the OS guessed by nmap with a
 osfamily name that is given in the OS list. See L<set_osfamily_list()>. If
@@ -584,17 +637,24 @@ Note that if you do not place this filter, it will parse and store (in memory)
 hosts that do not have much information. So calling a Parse::Nmap::XML::Host
 method on one of these hosts that were 'down', will return undef.
 
-=item I<PARSE_SEQUENCES>
+=item I<SEQUENCES>
 
 If set to true, parses the tcpsequence, ipidsequence and tcptssequence
 information. This is the default.
 
-=item I<PARSE_PORTINFO>
+=item I<PORTINFO>
 
 If set to true, parses the port information. (You usually want this enabled).
 This is the default.
 
-=item I<PARSE_UPTIME>
+=item I<SCANINFO>
+
+If set to true, parses the scan information. This includes the 'scaninfo',
+'nmaprun' and 'finished' tags. This is set to true by default. If you don't
+care about the scan information of the file, then turn this off to enhance speed
+and memory usage.
+
+=item I<UPTIME>
 
 If set to true, parses the uptime information (lastboot, uptime-seconds..etc).
 This is the default.
@@ -603,11 +663,12 @@ This is the default.
 
 Resets the value of the filters to the default values:
 
- parse_osfamily 	=> 1
- only_active 		=> 0
- parse_sequences 	=> 1
- parse_portinfo		=> 1
- parse_uptime		=> 1
+ osfamily 	=> 1
+ only_active 	=> 0
+ sequences 	=> 1
+ portinfo	=> 1
+ scaninfo	=> 1
+ uptime		=> 1
 
 =back 4
 
@@ -669,10 +730,9 @@ there is no way to keep going after an error.
 =item B<clean()>
 
 Frees up memory by cleaning the current tree hashes and purging the current
-information in the XML::Twig object.
+information in the XML::Twig object. Returns the Parse::Nmap::XML object.
 
 =back 4
-
 
 =head2 Post-Parse Methods
 
@@ -850,19 +910,47 @@ The slot order starts at 1.
  $host_obj->os_matches(1); #returns the 1st os name found
  $host_obj->os_matches(5); #returns the 5th. (you get the idea...)
 
-=item B<os_port_used()>
+=item B<os_port_used($state)>
 
-Returns the port number that was used in determining
-the OS of the system.
+Returns the port number that was used in determining the OS of the system.
+If $state is set to 'open', then the port id that was used in state open is
+returned. If $state is set to 'closed', then the port id that was used in state
+closed is returned. (no kidding...). Default, the open port number is returned.
 
 =item B<os_family()>
 
-Returns the osfamily_name that was matched to the given host.
-(see set_osfamily_list()).
+Returns the osfamily_name that was matched to the given host. This osfamily
+value is determined by the list given in the *_osfamily_list() functions.
 
-sub tcpsequence {return @{$_[0]->{tcpsequence}}}
-sub ipidsequence {return @{$_[0]->{ipidsequence}}}
-sub tcptssequence {return @{$_[0]->{tcptssequence}}}
+I<Note: see set_osfamily_list()>
+
+=item B<os_class([$number])>
+
+Returns the os_family, os_generation and os_type that was guessed by nmap. The
+os_class tag does not always appear in all nmap OS fingerprinting scans. This
+appears in newer nmap versions. You should check to see if there are values to
+this. If you want a customized (and sure) way of determining an os_family value
+use the *_osfamily_list() functions to set them. These will determine what
+os_family value to give depending on the osmatches recovered from the scan.
+
+ ($os_family,$os_gen,$os_type) = $host_obj->os_class(); #returns the first set
+
+There can be more than one os_class (different kernels of Linux for example).
+In order to access these extra os_class information, you can pass an index
+number to the function. If not number is given, the first os_class
+information is returned. The slot order starts at 1.
+
+  #returns the first set (same as passing no arguments)
+ ($os_family,$os_gen,$os_type) = $host_obj->os_class(1);
+
+  #returns os_gen value only. Example: '2.4.x' if is a Linux 2.4.x kernel.
+  $os_gen                      = ($host_obj->os_class())[2];# os_gen only
+
+You can play with perl to get the values you want easily.
+
+I<Note: This tag is usually available in new versions of nmap. You can define
+your own os_family customizing the os_family lists using the
+Parse::Nmap::XML functions: set_osfamily_list() and get_osfamily_list().>
 
 =item B<tcpsequence()>
 
@@ -894,7 +982,7 @@ Returns the time and date the given host was last rebooted.
 
 =head1 AUTHOR
 
-Anthony G Persaud <apersaud@cpan.org>
+Anthony G Persaud <ironstar@iastate.edu>
 
 =head1 SEE ALSO
 

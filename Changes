@@ -1,7 +1,29 @@
 Revision history for Perl extension Parse::Nmap::XML.
 
+
+Changes for 0.62
+	- stable release with all new changes.
+
+Changes for 0.6_4
+	- changes to parse filter tags. All previously called PARSE_* have
+		the PARSE_ removed from them. Ex: PARSE_OSFAMILY is now
+		OSFAMILY.
+	- osclass tag added.
+	- a bug found with the sequences is fixed
+	- making use of ignore_elts to save when creating objects
+	- parse_filters completly excludes tags that you decide not to parse.
+		Much faster parsing and memory usage efficiency. efficiency.t
+		tests this benchmark to make sure that the twig parser does not
+		do any work it doesn't have to.
+	- permanently excluding some static tags using ignore_elts.
+	- added SCANINFO filter.
+
+Changes for 0.6_3
+	- os_port_used, now can return the open or closed port used in OS
+		detection depending on the given parameter.
+
 Changes for 0.6_2
-	- Bug #2968: 
+	- Bug #2968:
 		fixed bogus 'use 5.008' in Makefile.PL (runs on 5.6 also)
 		instead using 5.004
 		fixed minor warnings when compiling with -w
@@ -18,8 +40,7 @@ Changed for 0.6
 	- generic_os and all references are now refereed to as 'osfamily'
 		I thought it better resembles what it stands for.
 	- fixed some documentation problems
-	- changes in Parse::Nmap::XML :
-		parse_filter_* have been replaced with parse_filters(), which
+	- parse_filter_* have been replaced with parse_filters(), which
 		can enable multiple different filters through a hashref.
 		Filters available:
 		ONLY_ACTIVE, PARSE_OSFAMILY, PARSE_UPTIME, PARSE_PORTINFO,

@@ -5,7 +5,7 @@ use blib;
 use warnings;
 use File::Spec;
 use Cwd;
-use Test::More tests => 7;
+use Test::More tests => 43;
 use vars qw($host $p $FH $scaninfo @test %test $test);
 use_ok('Parse::Nmap::XML');
 
@@ -20,7 +20,8 @@ proto_of_scan_type
 
 my @Host = qw(
 uptime_lastboot uptime_seconds os_family os_port_used os_matches udp_service_name
-tcp_service_name udp_ports tcp_ports hostnames addrtype addr status
+tcp_service_name udp_ports tcp_ports hostnames addrtype addr status tcpsequence
+ipidsequence tcptssequence os_class
 );
 
 my @Std = qw(
@@ -33,6 +34,6 @@ get_osfamily_list set_osfamily_list
 isa_ok( $p , 'Parse::Nmap::XML');
 isa_ok( $scaninfo,'Parse::Nmap::XML::ScanInfo');
 isa_ok( $host,'Parse::Nmap::XML::Host');
-can_ok($p,@Std);
-can_ok($scaninfo,@ScanInfo);
-can_ok($host,@Host);
+for(@Std){can_ok($p,$_);}
+for(@ScanInfo){can_ok($scaninfo,$_);}
+for(@Host){can_ok($host,$_);}
