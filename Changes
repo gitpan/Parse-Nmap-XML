@@ -1,5 +1,12 @@
 Revision history for Perl extension Parse::Nmap::XML.
 
+TODO:
+	Add register function calls
+
+Changes for 0.64
+	- nmaprun filter bug fixed
+	- important documentation changes
+
 Changes for 0.63
 	- added vendor to os_class
 	- fixed division by zero on one of the efficiency test.

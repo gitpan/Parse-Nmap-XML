@@ -12,7 +12,7 @@ use constant IGNORE_ADDPORT => 1;
 use constant IGNORE_EXTRAPORTS => 1;
 
 
-our $VERSION = '0.63';
+our $VERSION = '0.64';
 
 sub new {
 
@@ -76,7 +76,6 @@ $$self{twig}->setIgnoreEltsHandlers({
 	'uptime' 	=> ($F{uptime} ? undef : 1),
 	'scaninfo' 	=> ($F{scaninfo} ? undef : 1),
 	'finished' 	=> ($F{scaninfo} ? undef : 1),
-	'nmaprun' 	=> ($F{scaninfo} ? undef : 1)
 	});
 
 return \%F;
@@ -167,7 +166,7 @@ $twig->purge;}
 
 sub _nmaprun_hdlr {#Last tag in an nmap output
 my ($twig,$host) = @_;
-unless($F{scaninfo}){$twig->ignore;return;}
+unless($F{scaninfo}){return;}
 $S->{start_time} = $host->att('start');
 $S->{nmap_version} = $host->att('version');
 $S->{args} = $host->att('args');
@@ -441,7 +440,7 @@ __END__
 
 =head1 NAME
 
-Parse::Nmap::XML - parser for nmap xml scan data using perl.
+Parse::Nmap::XML - nmap parser for xml scan data using perl.
 
 =head1 SYNOPSIS
 
@@ -484,14 +483,18 @@ Parse::Nmap::XML - parser for nmap xml scan data using perl.
 
 =head1 DESCRIPTION
 
-This is an XML parser for nmap XML reports. This uses the XML::Twig library
-which is fast and more memory efficient than using the XML::SAX::PurePerl that
-comes with Nmap::Scanner::Scanner. This module, in the authors opinion, is
-easier to use for basic information gathering of hosts.
+This is an stand-alone output parser for nmap XML reports. This uses the XML::Twig library
+which is fast and memory efficient. This module does not do a nmap scan 
+(See Nmap::Scanner for that functionality). It either can parse a nmap xml file,
+or it can take a filehandle that is piped from a current nmap running scan using '-oX -'
+switch.This module, in the authors opinion, is easier to use for basic information 
+gathering of hosts.
 
 This module is meant to be a balance of easy of use and efficiency. (more ease
-of use). If you need more information from an nmap xml-output that is not
-available in the release, please send your request. (see below).
+of use). I have added filtering capabilities and use various options on the twig
+library in order to incrase parsing speed and save on memory usage. If you need
+more information from an nmap xml-output that is not available in the release,
+please send your request. (see below).
 
 =head3 OVERVIEW
 
@@ -512,7 +515,7 @@ found to be up (active), then set the filter:
 Usually you won't have much information about hosts that are down from nmap
 anyways.
 
-=item I<Parse the Info>
+=item I<Run the parser>
 
 Parse the info. You use $obj->parse() or $obj->parsefile(), to parse the nmap xml
 information. This information is parsed and constructed internally.
@@ -985,13 +988,18 @@ Returns the time and date the given host was last rebooted.
 
 =back 4
 
+=head1 ACKNOWLEDGEMENTS
+
+Much inspiration came from Max Schubert Nmap::Scanner module, which initially
+gave me motivation to develop this stand-alone parsing module. Lots of thanks!
+
 =head1 AUTHOR
 
 Anthony G Persaud <ironstar@iastate.edu>
 
 =head1 SEE ALSO
 
-L<nmap(1)>, L<XML::Twig(3)>
+L<nmap(1)>, L<XML::Twig(3)>, L<Nmap::Scanner(3)>
 
   http://www.insecure.org/nmap/
   http://www.xmltwig.com

@@ -37,8 +37,10 @@ not really need the executable, but the xml output that you will be parsing
 CHANGES
 
 
-Changes from 0.60 to 0.63
+Changes from 0.60 to 0.64
 
+	- important documentation changes
+	- nmaprun filter bug fixed
 	- added vendor to os_class
 	- fixed division by zero on one of the efficiency test.
 	- it now checks to make sure Time::HiRes is installed before
