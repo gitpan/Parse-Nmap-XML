@@ -18,7 +18,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.6';
+our $VERSION = '0.6_1';
 
 sub new {
 my ($class,$self) = shift;
@@ -439,24 +439,50 @@ which is fast and more memory efficient than using the XML::SAX::PurePerl that
 comes with Nmap::Scanner::Scanner. This module, in the authors opinion, is
 easier to use for basic information gathering of hosts.
 
-=head3 Easy Steps
+This module is meant to be a balance of easy of use and efficiency. (more ease
+of use). If you need more information from an nmap xml-output that is not
+available in the release, please send your request. (see below).
 
-=item * Using this module is very simple. (hopefully). You use
-$obj->parse() or $obj->parsefile(), to parse the nmap xml
-information. This information is parsed and constructed
-internally.
+=head3 OVERVIEW
 
-=item * Use the $si = $obj->get_scaninfo() to obtain the
+Using this module is very simple. (hopefully).
+
+=item I<Set your Options>
+
+You first set any filters you want on the information you will parse. This
+is optional, but if you wish the parser to be more efficient, don't parse
+information you don't need. Other options (os_family) can be
+set also. (See Pre-Parse methods)
+
+Example, if you only want to retain the information of the hosts that nmap
+found to be up (active), then set the filter:
+
+ $obj->parse_filters({only_active => 1});
+
+Usually you won't have much information about hosts that are down from nmap
+anyways.
+
+=item I<Parse the Info>
+
+Parse the info. You use $obj->parse() or $obj->parsefile(), to parse the nmap xml
+information. This information is parsed and constructed internally.
+
+=item I<Get the Scan Info>
+
+Use the $si = $obj->get_scaninfo() to obtain the
 Parse::Nmap::XML::ScanInfo object. Then you can call any of the
 ScanInfo methods on this object to retrieve the information. See
-L<Parse::Nmap::XML::ScanInfo> below.
+Parse::Nmap::XML::ScanInfo below.
 
-=item * Use the $host_obj = $obj->get_host($addr) to obtain the
-Parse::Nmap::XML::Host object of the current address. Using this object
-you can call any methods in the Host object to retrieve the information
-taht nmap obtained from this scan.
+=item I<Get the Host Info>
 
-=item * You can use any of the other methods to filter or obtain
+Use the $obj->get_host($addr) to obtain the Parse::Nmap::XML::Host object of the
+current address. Using this object you can call any methods in the Host object
+to retrieve the information that nmap obtained from this scan.
+
+ $obj->get_host($ip_addr);
+
+You can use any of the other methods to filter or obtain
 different lists.
 
  	#returns all ip addresses that were scanned
@@ -467,26 +493,33 @@ different lists.
 	 #See get_os_list() and set_os_list()
 	 #etc. (see other methods)
 
-=item * After you are done with everything, you should do a $obj->clean()
+	#returns all host objects from the information parsed.
+	#All are Parse::Nmap::XML::Host objects
+ $obj->get_host_objects()
+
+
+=item I<Clean up>
+
+This is semi-optional. When files are not that long, this is optional.
+If you are in a situation with memory constraints and are dealing with large
+nmap xml-output files, this little effort helps. After you are done with everything, you should do a $obj->clean()
 to free up the memory used by maintaining the scan and hosts information
 from the scan. A much more efficient way to do is, once you are done using a
 host object, delete it.
 
- 	#Getting all IP addresses parsed
+ 		#Getting all IP addresses parsed
  for my $host ($obj->get_host_list())
- 	{#Getting the host object for that address
+ 	{	#Getting the host object for that address
 	my $h = $obj->get_host($host);
-	#Calling methods on that object
+		#Calling methods on that object
 	print "Addr: $host  OS: ".(join ',',$h->os_matches())."\n";
 	$obj->del_host($host); #frees memory
 	}
 
- Of course a much better way would be:
- for ($obj->get_host_objects())
- {
- print "Addr: ".$_->addr()." OS: ".$_->os_matches()."\n";
- delete $_;
- }
+	#Or when you are done with everything use $obj->clean()
+Or you could skip the $obj->del_host(), and after you are done, perform a
+$obj->clean() which resets all the internal trees. Of course there are much
+better ways to clean-up (using perl idioms).
 
 =head1 METHODS
 
@@ -537,13 +570,13 @@ as case-insensitive.
  	only_active	=> 0   #same here
  		});
 
-=item PARSE_OSFAMILY
+=item I<PARSE_OSFAMILY>
 
 If set to true, (the default), it will match the OS guessed by nmap with a
 osfamily name that is given in the OS list. See L<set_osfamily_list()>. If
 false, it will disable this matching (a bit of speed up in parsing).
 
-=item ONLY_ACTIVE
+=item I<ONLY_ACTIVE>
 
 If set to true, it will ignore hosts that nmap found to be in state 'down'.
 If set to perl-wise false, it will parse all the hosts. This is the default.
@@ -551,17 +584,17 @@ Note that if you do not place this filter, it will parse and store (in memory)
 hosts that do not have much information. So calling a Parse::Nmap::XML::Host
 method on one of these hosts that were 'down', will return undef.
 
-=item PARSE_SEQUENCES
+=item I<PARSE_SEQUENCES>
 
 If set to true, parses the tcpsequence, ipidsequence and tcptssequence
 information. This is the default.
 
-=item PARSE_PORTINFO
+=item I<PARSE_PORTINFO>
 
 If set to true, parses the port information. (You usually want this enabled).
 This is the default.
 
-=item PARSE_UPTIME
+=item I<PARSE_UPTIME>
 
 If set to true, parses the uptime information (lastboot, uptime-seconds..etc).
 This is the default.

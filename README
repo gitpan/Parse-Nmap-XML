@@ -1,4 +1,4 @@
-Parse/Nmap/XML version 0.6
+Parse/Nmap/XML version 0.6_1
 ============================
 
 Parse Nmap xml-output files using perl
@@ -36,6 +36,11 @@ not really need the executable, but the xml output that you will be parsing
 (or able to parse), must be from this version forward.
 
 CHANGES
+
+Changes for 0.6_1
+	- fixed a bug with the test script (finding test file)
+	- made a separate test to test the actual method existance
+	- portability when running the tests using File::Spec.
 
 Changes to 0.6
 	- better memory management using twig_roots

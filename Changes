@@ -1,5 +1,9 @@
 Revision history for Perl extension Parse::Nmap::XML.
 
+Changes for 0.6_1
+	- fixed a bug with the test script (finding test file)
+	- made a separate test to test the actual method existance
+	- portability when running the tests using File::Spec.
 
 Changed for 0.6
 	- better memory management using twig_roots

@@ -3,6 +3,7 @@ MANIFEST			This list of files
 Makefile.PL
 README
 XML.pm
+t/_methods.t
 t/basic.xml
 t/basic_parse.t
 t/nmap.dtd

@@ -4,34 +4,20 @@
 
 use strict;
 use blib;
-use Test::More tests => 60;
+use File::Spec;
+use Cwd;
+use Test::More tests => 53;
+use Parse::Nmap::XML;
+
 use constant TEST_FILE =>'basic.xml';
-use vars qw($host $p $FH $scriptpath $scaninfo @test %test $test);
-use_ok('Parse::Nmap::XML');
-$scriptpath = $0;$scriptpath =~ s%[^/]+$%%;
-$FH = $scriptpath.TEST_FILE;
-if(! -e $FH){$FH='./test.xml';}
+use vars qw($host $p $FH $scaninfo @test %test $test);
 
-my @ScanInfo = qw(
-num_of_services start_time finish_time nmap_version args scan_types
-proto_of_scan_type
-);
 
-my @Host = qw(
-uptime_lastboot uptime_seconds os_family os_port_used os_matches udp_service_name
-tcp_service_name udp_ports tcp_ports hostnames addrtype addr status
-);
 
-my @Std = qw(
-clean get_host_list get_host del_host get_host_objects filter_by_osfamily
-filter_by_status get_scaninfo safe_parse safe_parsefile parse parsefile parse_filters
-get_osfamily_list set_osfamily_list
-);
+$FH = File::Spec->catfile(cwd(),'t',TEST_FILE);
+$FH = File::Spec->catfile(cwd(),    TEST_FILE)  unless(-e $FH);
 
 $p = new Parse::Nmap::XML;
-$scaninfo = new Parse::Nmap::XML::ScanInfo;
-$host = new Parse::Nmap::XML::Host;
-
 
 nmap_parse_test();
 nmap_parse_std_test();
@@ -41,14 +27,7 @@ nmap_parse_scaninfo_test();
 nmap_parse_end_test();
 
 
-sub nmap_parse_test {
-isa_ok( $p , 'Parse::Nmap::XML');
-isa_ok( $scaninfo,'Parse::Nmap::XML::ScanInfo');
-isa_ok( $host,'Parse::Nmap::XML::Host');
-can_ok($p,@Std);
-can_ok($scaninfo,@ScanInfo);
-can_ok($host,@Host);
-ok($p->parsefile($FH),'Parsing from nmap data: $FH');}
+sub nmap_parse_test {ok($p->parsefile($FH),'Parsing from nmap data: $FH');}
 
 sub nmap_parse_end_test {
 ok(!$p->clean(),'Testing clean() to clean memory');
